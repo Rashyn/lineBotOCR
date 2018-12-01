@@ -30,6 +30,7 @@ from linebot.models import (
 )
 
 from vision import get_text_by_ms
+from translate import translate,language_identify
 
 app = Flask(__name__)
 
@@ -74,17 +75,23 @@ def handle_message(event):
 
     if (text.startswith('http')):
         image_text = get_text_by_ms(text)
-        messages = [
-            TextSendMessage(text=image_text),
-        ]
+        messages = check_and_translate(image_text)
 
     else:
-        messages = [
-            TextSendMessage(text=text),
-            TextSendMessage(text='画像を送信するか、画像のURLを送ってみてね!'),
-        ]
+        messages = check_and_translate(text)
 
     reply_message(event, messages)
+
+def check_and_translate(text):
+
+#    print(language_identify(text) == "en")
+
+    messages = [
+        TextSendMessage(text=text),
+        TextSendMessage(translate(text)),
+    ]
+
+    return messages
 
 @handler.add(MessageEvent, message=ImageMessage)
 def handle_image(event):
@@ -98,9 +105,7 @@ def handle_image(event):
     try:
         image_text = get_text_by_ms(image=image)
 
-        messages = [
-            TextSendMessage(text=image_text),
-        ]
+        messages = check_and_translate(image_text)
 
         reply_message(event, messages)
 
